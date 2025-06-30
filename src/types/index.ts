@@ -1,2 +1,1 @@
-// src/types/index.ts
-export * from './types';
+export type { Case } from './types'; // Re-export from types.ts

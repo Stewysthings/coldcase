@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Navbar, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { debounce } from 'lodash';
-import { Case } from './types';
+import type { Case } from './types/types';
 import { loadCases } from './utils/caseApi';
 import CaseForm from './components/CaseForm';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+
 
 function App() {
   // State management

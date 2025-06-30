@@ -1,11 +1,11 @@
 export interface Case {
   id: string;
   name: string;
-  year: number;
   location: string;
   status: string;
   description: string;
   photo?: string;
+  year: number;
   date: {
     day?: number;
     month?: number;
