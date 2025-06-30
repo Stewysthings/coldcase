@@ -17,3 +17,8 @@ interface ImportMeta {
       options?: { eager?: boolean }
     ): Record<string, () => Promise<unknown>>;
 }
+
+
+interface ImportMeta {
+  glob: (pattern: string) => Record<string, any>;
+}
