@@ -1,0 +1,27 @@
+backend:
+  name: git-gateway
+  branch: main
+media_folder: public/cases
+public_folder: /cases
+collections:
+  - name: cases
+    label: Cases
+    folder: public/cases
+    create: true
+    identifier_field: id
+    format: json
+    fields:
+      - { label: ID, name: id, widget: string }
+      - { label: Name, name: name, widget: string }
+      - { label: Location, name: location, widget: string }
+      - { label: Status, name: status, widget: string }
+      - { label: Description, name: description, widget: text }
+      - { label: Year, name: year, widget: number }
+      - { label: Date, name: date, widget: object, fields: [
+        { label: Day, name: day, widget: number, required: false },
+        { label: Month, name: month, widget: number, required: false },
+        { label: Year, name: year, widget: number },
+        { label: Precision, name: precision, widget: select, options: ["exact", "month", "year"] }
+      ]}
+      - { label: Photo, name: photo, widget: image, required: false }
+      - { label: Content, name: body, widget: markdown }

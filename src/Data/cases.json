@@ -1,0 +1,2 @@
+import casesData from './Data/cases.json';
+const fallbackCases: CaseData[] = casesData;
