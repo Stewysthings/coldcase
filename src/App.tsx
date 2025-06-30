@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Container, Navbar, Row, Col, Card, Form, Button } from 'react-bootstrap';
 import './App.css';
 import ReactMarkdown from 'react-markdown';
-import casesData from './data/cases.json';
-import { useMemo, useCallback } from 'react';
-// Install lodash with: yarn add lodash
-import { debounce } from 'lodash'; // or implement custom debounce
-
+import { debounce } from 'lodash';
 
 interface Case {
     id: string;
@@ -20,14 +16,10 @@ interface Case {
     content?: string; // For Markdown content
 }
 
-
-
 function App() {
     const [count, setCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    const [cases, setCases] = useState<Case[]>((casesData as unknown) as Case[]); // Initialize with cases.json
-
-    // Load dynamic cases (Markdown + meta.json)
+    const [cases, setCases] = useState<Case[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -57,12 +49,11 @@ function App() {
                     const contentPath = `${caseDir}/index.md?raw`;
                     const contentModule = await import(/* @vite-ignore */ contentPath);
                     const content = contentModule.default as string;
-                    // Add validation for case data
+
                     function validateCaseData(data: any): data is Case {
                         return data && typeof data.id === 'string' && typeof data.name === 'string';
                     }
 
-                    // In loadCases function
                     const validatedCase = validateCaseData(meta.default) ? { ...meta.default, content } : null;
                     if (!validatedCase) {
                         console.warn(`Invalid case data at ${metaPath}`);
@@ -74,7 +65,7 @@ function App() {
             return loadedCases;
         } catch (error) {
             console.error('Error loading cases:', error);
-            return (casesData as unknown) as Case[]; // Fallback to cases.json
+            return []; // fallback is just empty now
         }
     }
 
@@ -115,10 +106,12 @@ function App() {
                     />
                 </Form.Group>
 
+                {/* Loading / Error */}
+                {loading && <div className="text-center">Loading cases...</div>}
+                {error && <div className="alert alert-danger">{error}</div>}
+
                 {/* Case Cards */}
                 <Row xs={1} md={2} lg={3} className="g-4">
-                    {loading && <div className="text-center">Loading cases...</div>}
-                    {error && <div className="alert alert-danger">{error}</div>}
                     {filteredCases.map((caseData) => (
                         <Col key={caseData.id}>
                             <Card className="h-100 shadow-sm">
@@ -138,9 +131,9 @@ function App() {
                                         {caseData.name} ({caseData.year})
                                     </Card.Title>
                                     <Card.Subtitle className="mb-3 text-muted">
-                    <span className="d-inline-block bg-light px-2 py-1 rounded">
-                      {caseData.location}
-                    </span>{' '}
+                                        <span className="d-inline-block bg-light px-2 py-1 rounded">
+                                            {caseData.location}
+                                        </span>{' '}
                                         • {caseData.status}
                                     </Card.Subtitle>
                                     <Card.Text className="flex-grow-1" style={{ wordWrap: 'break-word' }}>
@@ -152,7 +145,7 @@ function App() {
                     ))}
                 </Row>
 
-                {/* Counter - Optional */}
+                {/* Counter */}
                 <div className="text-center mt-5">
                     <Button
                         variant="outline-primary"
