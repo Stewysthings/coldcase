@@ -4,6 +4,9 @@ import './App.css';
 import ReactMarkdown from 'react-markdown';
 import { debounce } from 'lodash';
 
+import 'bootstrap/dist/css/bootstrap.min.css';
+
+
 interface Case {
     id: string;
     name: string;
