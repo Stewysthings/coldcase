@@ -1,60 +1,85 @@
 /* ===== Reset & Base Styles ===== */
-* {
+:root {
+  --primary-bg: #f8f9fa;
+  --header-bg: #343a40;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 6px 12px rgba(0, 0, 0, 0.15);
+  --max-width: 1400px;
+  --gap: 25px;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body, #root {
+html {
+  scroll-behavior: smooth;
+}
+
+body {
   width: 100%;
   min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+              'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #212529;
+  background-color: var(--primary-bg);
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== Main Container ===== */
 .app-container {
-  width: 100%;
-  min-height: 100vh;
-  background-color: #f8f9fa;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 /* ===== Header Styles ===== */
 .header {
   width: 100%;
-  background: #343a40;
+  background: var(--header-bg);
   color: white;
-  padding: 1.5rem 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .header-content {
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 /* ===== Main Content ===== */
 .main-content {
-  width: 100%;
   flex: 1;
-  padding: 20px;
+  padding: 2rem 0;
 }
 
 /* ===== Card Grid ===== */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 25px;
+  gap: var(--gap);
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -64,8 +89,8 @@ html, body, #root {
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -73,17 +98,27 @@ html, body, #root {
 
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.card-img-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 aspect ratio */
+  overflow: hidden;
 }
 
 .card-img-top {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 200px;
+  height: 100%;
   object-fit: cover;
 }
 
 .card-body {
-  padding: 1.25rem;
+  padding: 1.5rem;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -92,35 +127,45 @@ html, body, #root {
 .card-title {
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
+  line-height: 1.3;
 }
 
 .card-text {
   margin-bottom: 1rem;
   flex: 1;
+  color: #495057;
 }
 
 /* ===== Responsive Adjustments ===== */
 @media (max-width: 768px) {
+  .header {
+    padding: 0.75rem 0;
+    position: static; /* Optional: Makes header non-sticky on mobile */
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 15px;
+  }
+
+  .main-content {
+    padding: 1rem 0;
+  }
+}
+
+@media (max-width: 480px) {
   .header-content {
     flex-direction: column;
     text-align: center;
-    gap: 1rem;
-  }
-  
-  .cards-grid {
-    grid-template-columns: 1fr;
-    padding: 0 15px;
-  }
-  
-  .card-img-top {
-    height: 180px;
+    padding: 0.5rem 15px;
   }
 }
 
 /* ===== Utility Classes ===== */
 .container {
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -128,3 +173,17 @@ html, body, #root {
 .text-center {
   text-align: center;
 }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+
