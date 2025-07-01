@@ -23,43 +23,27 @@ export default function CaseForm({ onSave, className, editCase }: CaseFormProps)
     references: []
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const validateCaseData = (data: Partial<Case>): data is Case => {
+    return !!(
+      data.id?.trim() &&
+      data.name?.trim() &&
+      data.location?.trim() &&
+      data.description?.trim() &&
+      data.status &&
+      data.date
+    );
+  };
 
   const handleSubmit = async () => {
-    // Validate required fields
-    if (!newCase.id || !newCase.name || !newCase.location || !newCase.description) {
-      alert('Please fill in all required fields');
+    if (!validateCaseData(newCase)) {
+      setError('Please fill in all required fields');
       return;
     }
-
-    setIsSaving(true);
-    try {
-      // Clean up references before saving (remove empty lines)
-      const cleanedCase = {
-        ...newCase,
-        references: (newCase.references || []).filter(link => link.trim())
-      };
-      const success = await onSave(cleanedCase as Case);
-      if (success) {
-        setShow(false);
-        if (!editCase) {
-          // Only reset form if adding new case, not editing
-          setNewCase({
-            id: '',
-            name: '',
-            location: '',
-            status: 'Unsolved',
-            description: '',
-            date: {
-              year: new Date().getFullYear(),
-              precision: 'year'
-            },
-            references: []
-          });
-        }
-      }
-    } finally {
-      setIsSaving(false);
-    }
+    
+    // Now TypeScript knows newCase is a complete Case object
+    const success = await onSave(newCase);
   };
 
   return (
@@ -74,6 +58,11 @@ export default function CaseForm({ onSave, className, editCase }: CaseFormProps)
         </Modal.Header>
         <Modal.Body>
           <Form>
+            {error && (
+              <div className="alert alert-danger" role="alert">
+                {error}
+              </div>
+            )}
             <Form.Group className="mb-3">
               <Form.Label>Case ID</Form.Label>
               <Form.Control
