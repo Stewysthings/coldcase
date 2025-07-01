@@ -13,4 +13,5 @@ export interface Case {
     precision: 'exact' | 'month' | 'year';
   };
   content?: string;
+  references?: string[];
 }

@@ -1,36 +1,61 @@
 import { useState } from 'react';
-import { Form, Button, Modal } from 'react-bootstrap';
-import { Case } from '../types';
+import { Form, Button, Modal, Row, Col } from 'react-bootstrap';
+import type { Case } from '../types/types';
 
 interface CaseFormProps {
   onSave: (caseData: Case) => Promise<boolean>;
   className?: string;
+  editCase?: Case;
 }
 
-export default function CaseForm({ onSave, className }: CaseFormProps) {
+export default function CaseForm({ onSave, className, editCase }: CaseFormProps) {
   const [show, setShow] = useState(false);
-  const [newCase, setNewCase] = useState<Partial<Case>>({
+  const [newCase, setNewCase] = useState<Partial<Case>>(editCase || {
     id: '',
     name: '',
     location: '',
     status: 'Unsolved',
-    year: new Date().getFullYear()
+    description: '',
+    date: {
+      year: new Date().getFullYear(),
+      precision: 'year'
+    },
+    references: []
   });
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async () => {
+    // Validate required fields
+    if (!newCase.id || !newCase.name || !newCase.location || !newCase.description) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const success = await onSave(newCase as Case);
+      // Clean up references before saving (remove empty lines)
+      const cleanedCase = {
+        ...newCase,
+        references: (newCase.references || []).filter(link => link.trim())
+      };
+      const success = await onSave(cleanedCase as Case);
       if (success) {
         setShow(false);
-        setNewCase({
-          id: '',
-          name: '',
-          location: '',
-          status: 'Unsolved',
-          year: new Date().getFullYear()
-        });
+        if (!editCase) {
+          // Only reset form if adding new case, not editing
+          setNewCase({
+            id: '',
+            name: '',
+            location: '',
+            status: 'Unsolved',
+            description: '',
+            date: {
+              year: new Date().getFullYear(),
+              precision: 'year'
+            },
+            references: []
+          });
+        }
       }
     } finally {
       setIsSaving(false);
@@ -40,12 +65,12 @@ export default function CaseForm({ onSave, className }: CaseFormProps) {
   return (
     <div className={className}>
       <Button variant="primary" onClick={() => setShow(true)}>
-        Add New Case
+        {editCase ? 'Edit Case' : 'Add New Case'}
       </Button>
 
       <Modal show={show} onHide={() => setShow(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Add New Case</Modal.Title>
+          <Modal.Title>{editCase ? 'Edit Case' : 'Add New Case'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -63,10 +88,138 @@ export default function CaseForm({ onSave, className }: CaseFormProps) {
               <Form.Control
                 value={newCase.name}
                 onChange={(e) => setNewCase({...newCase, name: e.target.value})}
+                required
               />
             </Form.Group>
 
-            {/* Add other fields similarly */}
+            <Form.Group className="mb-3">
+              <Form.Label>Location</Form.Label>
+              <Form.Control
+                value={newCase.location}
+                onChange={(e) => setNewCase({...newCase, location: e.target.value})}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={newCase.description}
+                onChange={(e) => setNewCase({...newCase, description: e.target.value})}
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Status</Form.Label>
+              <Form.Select
+                value={newCase.status}
+                onChange={(e) => setNewCase({...newCase, status: e.target.value})}
+              >
+                <option value="Unsolved">Unsolved</option>
+                <option value="Solved">Solved</option>
+                <option value="Cold Case">Cold Case</option>
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Date of Incident</Form.Label>
+              <Row>
+                <Col xs={4}>
+                  <Form.Control
+                    type="number"
+                    placeholder="Year"
+                    value={newCase.date?.year || ''}
+                    onChange={(e) => setNewCase({
+                      ...newCase,
+                      date: {
+                        ...newCase.date!,
+                        year: parseInt(e.target.value) || new Date().getFullYear()
+                      }
+                    })}
+                    required
+                  />
+                </Col>
+                <Col xs={4}>
+                  <Form.Control
+                    type="number"
+                    placeholder="Month (1-12)"
+                    min="1"
+                    max="12"
+                    value={newCase.date?.month || ''}
+                    onChange={(e) => setNewCase({
+                      ...newCase,
+                      date: {
+                        ...newCase.date!,
+                        month: parseInt(e.target.value) || undefined
+                      }
+                    })}
+                  />
+                </Col>
+                <Col xs={4}>
+                  <Form.Control
+                    type="number"
+                    placeholder="Day (1-31)"
+                    min="1"
+                    max="31"
+                    value={newCase.date?.day || ''}
+                    onChange={(e) => setNewCase({
+                      ...newCase,
+                      date: {
+                        ...newCase.date!,
+                        day: parseInt(e.target.value) || undefined
+                      }
+                    })}
+                  />
+                </Col>
+              </Row>
+              <Form.Select
+                className="mt-2"
+                value={newCase.date?.precision || 'year'}
+                onChange={(e) => setNewCase({
+                  ...newCase,
+                  date: {
+                    ...newCase.date!,
+                    precision: e.target.value as 'exact' | 'month' | 'year'
+                  }
+                })}
+              >
+                <option value="year">Year only</option>
+                <option value="month">Month and year</option>
+                <option value="exact">Exact date</option>
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Photo Filename</Form.Label>
+              <Form.Control
+                value={newCase.photo || ''}
+                onChange={(e) => setNewCase({...newCase, photo: e.target.value})}
+                placeholder="e.g., case-id.jpeg"
+              />
+              <Form.Text className="text-muted">
+                Photo filename in /public/photos/ folder (e.g., janet-smith-1924.jpeg)
+              </Form.Text>
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Reference Links</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Enter URLs separated by new lines (one per line)"
+                value={(newCase.references || []).join('\n')}
+                onChange={(e) => setNewCase({
+                  ...newCase,
+                  references: e.target.value.split('\n')
+                })}
+              />
+              <Form.Text className="text-muted">
+                Enter news articles, police reports, or other reference links
+              </Form.Text>
+            </Form.Group>
             <Button 
               variant="primary" 
               onClick={handleSubmit}

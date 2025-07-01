@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/your-repo-name/', // Replace with your GitHub repo name
+  base: '/', // Use root path for development
   plugins: [react()],
-  assetsInclude: ['**/*.md', '**/*.json']
+  assetsInclude: ['**/*.md', '**/*.json', '**/*.jpeg', '**/*.jpg', '**/*.png']
 });

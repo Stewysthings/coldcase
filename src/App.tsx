@@ -16,6 +16,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [count, setCount] = useState(0);
+  const [editingCase, setEditingCase] = useState<Case | undefined>(undefined);
 
   // Load cases on mount
   useEffect(() => {
@@ -40,7 +41,18 @@ function App() {
   const handleSaveCase = async (newCase: Case) => {
     try {
       // TODO: Replace with actual API call
-      setCases(prev => [...prev, newCase]);
+      setCases(prev => {
+        const existingIndex = prev.findIndex(c => c.id === newCase.id);
+        if (existingIndex >= 0) {
+          // Update existing case
+          const updated = [...prev];
+          updated[existingIndex] = newCase;
+          return updated;
+        } else {
+          // Add new case
+          return [...prev, newCase];
+        }
+      });
       return true; // Success
     } catch (err) {
       setError('Failed to save case');
@@ -61,11 +73,20 @@ function App() {
     []
   );
 
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSetSearchTerm.cancel();
+    };
+  }, [debouncedSetSearchTerm]);
+
   const filteredCases = useMemo(() => 
-    cases.filter(caseData =>
-      caseData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      caseData.location.toLowerCase().includes(searchTerm.toLowerCase())
-    ), 
+    cases
+      .filter(caseData =>
+        caseData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        caseData.location.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => a.date.year - b.date.year), // Sort by year (oldest first)
     [cases, searchTerm]
   );
 
@@ -99,11 +120,37 @@ function App() {
         </Form.Group>
 
         {/* Admin Panel */}
-        {isAdmin && (
+        {isAdmin && !editingCase && (
           <CaseForm 
             onSave={handleSaveCase}
             className="mb-4"
           />
+        )}
+
+        {/* Edit Case Panel */}
+        {isAdmin && editingCase && (
+          <div className="mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-2">
+              <h5>Editing: {editingCase.name}</h5>
+              <Button 
+                variant="outline-secondary" 
+                size="sm"
+                onClick={() => setEditingCase(undefined)}
+              >
+                Cancel Edit
+              </Button>
+            </div>
+            <CaseForm 
+              onSave={async (updatedCase) => {
+                const success = await handleSaveCase(updatedCase);
+                if (success) {
+                  setEditingCase(undefined);
+                }
+                return success;
+              }}
+              editCase={editingCase}
+            />
+          </div>
         )}
 
         {/* Status Indicators */}
@@ -118,26 +165,58 @@ function App() {
                 {caseData.photo && (
                   <Card.Img
                     variant="top"
-                    src={`/cases/${caseData.id}/${caseData.photo}`}
+                    src={`/photos/${caseData.photo}`}
                     alt={`${caseData.name} case photo`}
                     style={{ height: '200px', objectFit: 'cover' }}
+                    onError={(e) => {
+                      console.error('Failed to load image:', `/photos/${caseData.photo}`, 'for case:', caseData.name);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    onLoad={() => {
+                      console.log('Successfully loaded image:', `/photos/${caseData.photo}`, 'for case:', caseData.name);
+                    }}
                   />
                 )}
                 <Card.Header>
                   {caseData.name} • {formatDate(caseData.date)}
                 </Card.Header>
                 <Card.Body className="d-flex flex-column">
-                  <Card.Title className="fs-5 fw-bold text-primary">
-                    {caseData.name} ({caseData.year})
+                  <Card.Title 
+                    className={`fs-5 fw-bold ${isAdmin ? 'text-primary text-decoration-underline' : 'text-primary'}`}
+                    style={isAdmin ? { cursor: 'pointer' } : {}}
+                    onClick={isAdmin ? () => setEditingCase(caseData) : undefined}
+                    title={isAdmin ? 'Click to edit this case' : ''}
+                  >
+                    {caseData.name} ({caseData.date.year})
                   </Card.Title>
                   <Card.Subtitle className="mb-3 text-muted">
                     <span className="d-inline-block bg-light px-2 py-1 rounded">
                       {caseData.location}
                     </span> • {caseData.status}
                   </Card.Subtitle>
-                  <Card.Text className="flex-grow-1" style={{ wordWrap: 'break-word' }}>
+                  <Card.Text className="flex-grow-1" style={{ wordWrap: 'break-word', whiteSpace: 'pre-wrap' }}>
                     {caseData.description}
                   </Card.Text>
+                  {caseData.references && caseData.references.length > 0 && (
+                    <div className="mt-2">
+                      <small className="text-muted">References:</small>
+                      <ul className="list-unstyled mt-1">
+                        {caseData.references.map((link, index) => (
+                          <li key={index}>
+                            <a 
+                              href={link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-decoration-none small"
+                            >
+                              {link.length > 50 ? `${link.substring(0, 50)}...` : link}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
                 </Card.Body>
               </Card>
             </Col>
