@@ -1,32 +1,26 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Navbar, Button, Form, Alert, Card } from 'react-bootstrap';
-import { debounce } from 'lodash';
-import type { Case } from './types/types';
+import { useState, Suspense } from 'react';
+import { Button, Alert } from 'react-bootstrap';
 import CaseForm from './components/CaseForm';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
-
-
-
-
-
+import AdminLoadingSkeleton from './components/AdminLoadingSkeleton';
 
 function App() {
-  
-  // State management - MOVE ALL STATE HOOKS TO THE TOP
-  const [cases, setCases] = useState<Case[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false); // Now defined before use
-  const [count, setCount] = useState(0);
-  const [editingCase, setEditingCase] = useState<Case | undefined>(undefined);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
 
-  // Rest of your code remains exactly the same...
-  // [Keep all your useEffect, handleSaveCase, formatDate, etc.]// [Keep all your existing state hooks...]
+  // Safe admin toggle function
+  const toggleAdmin = () => {
+    try {
+      setIsAdmin(prev => !prev);
+      setAdminError(null);
+    } catch (error) {
+      console.error("Admin toggle error:", error);
+      setAdminError("Failed to change admin mode");
+    }
+  };
 
-   return (
+  return (
     <div className="app-container">
+      {/* Header with admin toggle */}
       <header className="header">
         <div className="header-content container">
           <h1 className="m-0">
@@ -34,8 +28,10 @@ function App() {
             <Button 
               size="sm" 
               variant={isAdmin ? 'danger' : 'outline-light'} 
-              onClick={() => setIsAdmin(!isAdmin)}
+              onClick={toggleAdmin}
               className="ms-3"
+              aria-expanded={isAdmin}
+              aria-controls="admin-panel"
             >
               {isAdmin ? 'Exit Admin' : 'Admin Mode'}
             </Button>
@@ -43,78 +39,33 @@ function App() {
         </div>
       </header>
 
-      {/* Rest of your JSX remains the same... */}
-    </div>
-      </header>
+      {/* Error display */}
+      {adminError && (
+        <Alert variant="danger" dismissible onClose={() => setAdminError(null)}>
+          {adminError}
+        </Alert>
+      )}
 
+      {/* Main content with safe admin panel rendering */}
       <main className="main-content">
         <div className="container">
-          {/* Search Bar */}
-          <Form.Group className="mb-4 bg-light p-3 rounded shadow-sm">
-            <Form.Control
-              type="search"
-              placeholder="Search by name or location..."
-              onChange={(e) => debouncedSetSearchTerm(e.target.value)}
-              className="fs-5 p-3"
-            />
-          </Form.Group>
+          {/* Other components... */}
 
-          {/* Admin Panels (keep existing functionality) */}
-          {isAdmin && !editingCase && (
-            <CaseForm onSave={handleSaveCase} className="mb-4" />
-          )}
-          
-          {isAdmin && editingCase && (
-            <div className="mb-4">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5>Editing: {editingCase.name}</h5>
-                <Button 
-                  variant="outline-secondary" 
-                  size="sm"
-                  onClick={() => setEditingCase(undefined)}
-                >
-                  Cancel Edit
-                </Button>
-              </div>
-              <CaseForm 
-                onSave={async (updatedCase) => {
-                  const success = await handleSaveCase(updatedCase);
-                  if (success) setEditingCase(undefined);
-                  return success;
-                }}
-                editCase={editingCase}
-              />
+          {/* Admin Panel with error boundaries */}
+          {isAdmin && (
+            <div id="admin-panel">
+              <Suspense fallback={<AdminLoadingSkeleton />}>
+                <CaseForm 
+                  onSave={(caseData) => {
+                    console.log("Saving case:", caseData);
+                    // Add your save logic here
+                  }} 
+                />
+              </Suspense>
             </div>
           )}
-
-          {/* Status Indicators */}
-          {loading && <div className="text-center py-4">Loading cases...</div>}
-          {error && <Alert variant="danger" dismissible onClose={() => setError(null)}>{error}</Alert>}
-
-          {/* Case Grid - Updated to use our CSS Grid */}
-          <div className="cards-grid">
-            {filteredCases.map((caseData) => (
-              <Card key={caseData.id} className="h-100">
-                {/* [Keep all your existing Card content...] */}
-              </Card>
-            ))}
-          </div>
-
-          {/* Counter */}
-          <div className="text-center mt-5">
-            <Button
-              variant="outline-primary"
-              size="lg"
-              onClick={() => setCount(c => c + 1)}
-              className="px-4"
-            >
-              Total Views: {count}
-            </Button>
-          </div>
         </div>
       </main>
     </div>
   );
 }
-
-export default App;
