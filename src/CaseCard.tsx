@@ -1,27 +1,6 @@
 import { Card, Col } from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
-
-interface Case {
-    id: string;
-    name: string;
-    location: string;
-    status: string;
-    description: string;
-    year: string | number;
-    date: { day?: number; month?: number; year: number; precision: 'exact' | 'month' | 'year' };
-    photo?: string;
-    content?: string;
-}
-
-
-function CaseCard({ caseData, formatDate }: CaseCardProps) {
-  return (
-    <Card className="h-100 shadow-sm">
-      {/* Card content */}
-    </Card>
-  );
-}
-
+import type { Case } from './types/types';
 
 interface CaseCardProps {
     caseData: Case;
@@ -45,7 +24,7 @@ export function CaseCard({ caseData, formatDate }: CaseCardProps) {
                 </Card.Header>
                 <Card.Body className="d-flex flex-column">
                     <Card.Title className="fs-4 fw-bold text-primary">
-                        {caseData.name} ({caseData.year})
+                        {caseData.name} ({caseData.date.year})
                     </Card.Title>
                     <Card.Subtitle className="mb-3 text-muted">
             <span className="d-inline-block bg-light px-2 py-1 rounded">

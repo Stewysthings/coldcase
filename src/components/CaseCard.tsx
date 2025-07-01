@@ -1,3 +1,6 @@
+import { Card } from 'react-bootstrap';
+import type { Case } from '../types/types';
+
 interface CaseCardProps {
   caseData: Case;
   formatDate: (date: Case['date']) => string;
